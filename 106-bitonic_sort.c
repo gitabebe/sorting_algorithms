@@ -1,88 +1,90 @@
 #include "sort.h"
 
-void swap_ints(int *a, int *b);
-void bitonic_merge(int *array, size_t size, size_t start, size_t seq,
-		char flow);
-void bitonic_seq(int *array, size_t size, size_t start, size_t seq, char flow);
-void bitonic_sort(int *array, size_t size);
-
 /**
- * swap_ints - Swap two integers in an array.
- * @a: The first integer to swap.
- * @b: The second integer to swap.
+ * swap - swaps 2 int values
+ * @a: address of first value
+ * @b: address of second value
+ *
+ * Return: void
  */
-void swap_ints(int *a, int *b)
+void swap(int *a, int *b)
 {
-	int tmp;
-
-	tmp = *a;
-	*a = *b;
-	*b = tmp;
+if (*a != *b)
+{
+*a = *a + *b;
+*b = *a - *b;
+*a = *a - *b;
+}
 }
 
 /**
- * bitonic_merge - Sort a bitonic sequence inside an array of integers.
- * @array: An array of integers.
- * @size: The size of the array.
- * @start: The starting index of the sequence in array to sort.
- * @seq: The size of the sequence to sort.
- * @flow: The direction to sort in.
+ * bitonic_compare - compares bitonically
+ * @up: true if UP sorting
+ * @array: the array pointer
+ * @start: the start index
+ * @end: the stop index
  */
-void bitonic_merge(int *array, size_t size, size_t start, size_t seq,
-		char flow)
+void bitonic_compare(int up, int *array, size_t start, size_t end)
 {
-	size_t i, jump = seq / 2;
+size_t half = (end - start + 1) / 2, i;
 
-	if (seq > 1)
-	{
-		for (i = start; i < start + jump; i++)
-		{
-			if ((flow == 0 && array[i] > array[i + jump]) ||
-			    (flow == 1 && array[i] < array[i + jump]))
-				swap_ints(array + i, array + i + jump);
-		}
-		bitonic_merge(array, size, start, jump, flow);
-		bitonic_merge(array, size, start + jump, jump, flow);
-	}
+for (i = start; i < start + half; i++)
+if ((array[i] > array[i + half]) == up)
+swap(&array[i], &array[i + half]);
 }
 
 /**
- * bitonic_seq - Convert an array of integers into a bitonic sequence.
- * @array: An array of integers.
- * @size: The size of the array.
- * @start: The starting index of a block of the building bitonic sequence.
- * @seq: The size of a block of the building bitonic sequence.
- * @flow: The direction to sort the bitonic sequence block in.
+ * bitonic_merge - merges bitonically
+ * @up: true if UP sorting
+ * @array: the array pointer
+ * @start: the start index
+ * @end: the stop index
  */
-void bitonic_seq(int *array, size_t size, size_t start, size_t seq, char flow)
+void bitonic_merge(int up, int *array, size_t start, size_t end)
 {
-	size_t cut = seq / 2;
-	char *str = (flow == 0) ? "0" : "1";
+size_t mid = (start + end) / 2;
 
-	if (seq > 1)
-	{
-		printf("Merging [%lu/%lu] (%s):\n", seq, size, str);
-		print_array(array + start, seq);
-
-		bitonic_seq(array, size, start, cut, 0);
-		bitonic_seq(array, size, start + cut, cut, 1);
-		bitonic_merge(array, size, start, seq, flow);
-
-		printf("Result [%lu/%lu] (%s):\n", seq, size, str);
-		print_array(array + start, seq);
-	}
+if (end - start < 1)
+return;
+bitonic_compare(up, array, start, end);
+bitonic_merge(up, array, start, mid);
+bitonic_merge(up, array, mid + 1, end);
 }
 
 /**
- * bitonic_sort - Sort an array of integers in ascending
- *                order using the bitonic sort algorithm.
- * @array: An array of integers.
- * @size: The size of the array.
+ * _bitonic_sort - sorts bitonically by recursion
+ * @up: true if UP sorting
+ * @array: the array pointer
+ * @size: the length of the array
+ * @start: the start index
+ * @end: the stop index
+ */
+void _bitonic_sort(int up, int *array, size_t size, size_t start, size_t end)
+{
+size_t mid = (start + end) / 2;
+
+if (end - start < 1)
+return;
+printf("Merging [%lu/%lu] (%s):\n", end - start + 1, size,
+up ? "UP" : "DOWN");
+print_array(array + start, end - start + 1);
+_bitonic_sort(1, array, size, start, mid);
+_bitonic_sort(0, array, size, mid + 1, end);
+bitonic_merge(up, array, start, end);
+printf("Result [%lu/%lu] (%s):\n", end - start + 1, size,
+up ? "UP" : "DOWN");
+print_array(array + start, end - start + 1);
+}
+
+/**
+ * bitonic_sort - sorts bitonically
+ * @array: the array pointer
+ * @size: the length of the array
  */
 void bitonic_sort(int *array, size_t size)
 {
-	if (array == NULL || size < 2)
-		return;
+if (!array || size < 2)
+return;
 
-	bitonic_seq(array, size, 0, size, 0);
+_bitonic_sort(1, array, size, 0, size - 1);
 }
